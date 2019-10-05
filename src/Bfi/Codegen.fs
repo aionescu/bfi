@@ -3,17 +3,15 @@ module Bfi.Codegen
 open System
 open System.Reflection
 open System.Reflection.Emit
-open TypeOf
+open PtrHelper
 open Bfi.Ast
 
 type IL = ILGenerator
 
 let inline ensureTypeOf() =
-  let type' = Ptr.TypeOf<sbyte>()
-
+  let type' = Ptr<sbyte>.TypeOf
   if type'.Name <> "SByte*" then
-    printfn "Error: typeof(sbyte*) is %s, expected SByte*" type'.Name
-    exit -1
+    failwithf "Error: typeof(sbyte*) is %s, expected SByte*" type'.Name
   else
     type'
 
