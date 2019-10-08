@@ -4,6 +4,9 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
+    <PublishTrimmed>true</PublishTrimmed>
+    <PublishSingleFile>true</PublishSingleFile>
+    <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Ast.fs"/>
@@ -13,6 +16,6 @@
     <Compile Include="Program.fs"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PtrHelper\PtrHelper.csproj"/>
+    <ProjectReference Include="../PtrHelper/PtrHelper.csproj"/>
   </ItemGroup>
 </Project>
