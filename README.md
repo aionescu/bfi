@@ -104,6 +104,8 @@ Consecutive `set`s also behave similarly: Only the last `set` is compiled, previ
 
 BF programs used to test the interpreter can be found in the [Tests](Tests/) folder.
 
+Some test programs are made by other people and were found on the web. Such programs have a comment containing the download link, as well as the original license/copyright notices.
+
 ## License
 
 This project is licensed under the terms of the MIT License.
