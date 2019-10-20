@@ -9,13 +9,9 @@ let inline skipComment (source: char span) =
   let cr = source.IndexOf('\r')
   let lf = source.IndexOf('\n')
 
-  if lf = cr + 1 then // CRLF endings
-    source.Slice(lf)
-  elif cr = -1 && lf = -1 then
+  if cr = -1 && lf = -1 then
     span<char>.Empty
-  elif cr = -1 || lf = -1 then
-    source.Slice(max cr lf)
-  else 
+  else
     source.Slice(min cr lf)
 
 let inline next (source: char span) = source.Slice(1)
