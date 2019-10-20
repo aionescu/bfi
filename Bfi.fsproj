@@ -9,13 +9,13 @@
     <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Ast.fs"/>
-    <Compile Include="Parser.fs"/>
-    <Compile Include="Optimizer.fs"/>
-    <Compile Include="Codegen.fs"/>
-    <Compile Include="Program.fs"/>
+    <Compile Include="src/Bfi/Ast.fs"/>
+    <Compile Include="src/Bfi/Parser.fs"/>
+    <Compile Include="src/Bfi/Optimizer.fs"/>
+    <Compile Include="src/Bfi/Codegen.fs"/>
+    <Compile Include="src/Bfi/Program.fs"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../PtrHelper/PtrHelper.csproj"/>
+    <ProjectReference Include="src/PtrHelper/PtrHelper.csproj"/>
   </ItemGroup>
 </Project>

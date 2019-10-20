@@ -4,7 +4,7 @@
 
 ## Building from source
 
-In order to build the project for a specific platform, run `dotnet build src/Bfi/Bfi.fsproj -r <platform>` in the repository's directory, where `<platform>` is either `win-x64`, `win-x86`, `linux-x64`, or `osx-x64`.
+In order to build the project for a specific platform, run `dotnet build -r <platform>` in the repository's directory, where `<platform>` is either `win-x64`, `win-x86`, `linux-x64`, or `osx-x64`.
 
 You will need the .NET Core SDK v3.0 or newer, which you can download [here](https://dotnet.microsoft.com/download).
 
