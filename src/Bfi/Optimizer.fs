@@ -5,14 +5,6 @@ open Bfi.Ast
 [<Literal>]
 let maxPasses = 64
 
-let rec opCount' acc ops =
-  match ops with
-  | Loop ops :: rest -> opCount' (acc + opCount' 1 ops) rest
-  | _ :: rest -> opCount' (1 + acc) rest
-  | [] -> acc
-
-let inline opCount ops = opCount' 0 ops
-
 let rec optPass changed acc ops =
   match ops with
   | Add 0y :: rest
@@ -43,27 +35,14 @@ let rec optPass changed acc ops =
   | op :: rest -> optPass changed (op :: acc) rest
   | [] -> (changed, List.rev acc)
 
-let inline tryPrependSet0 ops =
-  match ops with
-  | Set 0y :: _ -> ops
-  | _ -> set0 :: ops
-
-let rec tryRemoveSet0 ops =
-  match ops with
-  | Set 0y :: rest -> tryRemoveSet0 rest
-  | _ -> ops
-
 let rec optimize' passesLeft ops =
   match passesLeft with
   | 0 -> ops
   | _ ->
-      let changed, ops = optPass false [] <| tryPrependSet0 ops
+      let changed, ops = optPass false [] ops
 
       match changed with
       | true -> optimize' (passesLeft - 1) ops
       | _ -> ops
   
-let inline optimize ops =
-  set0 :: ops
-  |> optimize' maxPasses
-  |> tryRemoveSet0
+let inline optimize ops = optimize' maxPasses (set0 :: ops)
