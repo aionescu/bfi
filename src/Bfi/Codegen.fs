@@ -123,7 +123,7 @@ let inline emitOps il ops =
   emitOps' il ops
   emitRet il
 
-let inline run ops =
+let inline compile ops =
   let ty =
     mkAssembly()
     |> mkModule
@@ -135,5 +135,7 @@ let inline run ops =
     |> getIL
 
   emitOps il ops
+  ty.CreateType().GetMethod("Main", bindingFlags)
 
-  ty.CreateType().GetMethod("Main", bindingFlags).Invoke(null, Array.empty) |> ignore
+let inline run (mtd: MethodInfo) =
+  mtd.Invoke(null, Array.empty) |> ignore

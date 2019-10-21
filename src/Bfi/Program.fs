@@ -5,18 +5,22 @@ open System.IO
 
 [<EntryPoint>]
 let main argv =
-  let sw = Stopwatch.StartNew()
+  let code = File.ReadAllText argv.[0]
 
-  let ast =
-    argv.[0]
-    |> File.ReadAllText
+  let sw = Stopwatch.StartNew()
+  let mtd =
+    code
     |> Parser.parse
     |> Optimizer.optimize
+    |> Codegen.compile
 
+  sw.Stop()
   printfn "[Compile: %dms]" sw.ElapsedMilliseconds
 
   sw.Restart()
-  Codegen.run ast
+  Codegen.run mtd
 
+  sw.Stop()
   printfn "\n[Run: %dms]" sw.ElapsedMilliseconds
+  
   0
