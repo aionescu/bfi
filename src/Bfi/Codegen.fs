@@ -38,7 +38,7 @@ let inline mkMethod (ty: TypeBuilder) = ty.DefineMethod("Main", methodAttrs, typ
 
 let inline getIL (mtd: MethodBuilder) = mtd.GetILGenerator()
 
-let inline emitTapeAlloc (il: ILGenerator) =
+let emitTapeAlloc (il: ILGenerator) =
   il.DeclareLocal(sbytePtrType) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
   il.DeclareLocal(typeof<ConsoleKeyInfo>) |> ignore // Local needed for storing result of Console.ReadKey() to call .KeyChar on it
 
@@ -50,7 +50,7 @@ let inline emitTapeAlloc (il: ILGenerator) =
 let inline emitRet (il: IL) =
   il.Emit(OpCodes.Ret)
 
-let inline emitAdd (il: IL) (value: sbyte) =
+let emitAdd (il: IL) (value: sbyte) =
   il.Emit(OpCodes.Ldloc_0)
   il.Emit(OpCodes.Dup)
   il.Emit(OpCodes.Ldind_I1)
@@ -59,18 +59,18 @@ let inline emitAdd (il: IL) (value: sbyte) =
   il.Emit(OpCodes.Conv_I1)
   il.Emit(OpCodes.Stind_I1)
 
-let inline emitMov (il: IL) (value: int) =
+let emitMov (il: IL) (value: int) =
   il.Emit(OpCodes.Ldloc_0)
   il.Emit(OpCodes.Ldc_I4, value)
   il.Emit(OpCodes.Add)
   il.Emit(OpCodes.Stloc_0)
 
-let inline emitSet (il: IL) (value: sbyte) =
+let emitSet (il: IL) (value: sbyte) =
   il.Emit(OpCodes.Ldloc_0)
   il.Emit(OpCodes.Ldc_I4_S, value)
   il.Emit(OpCodes.Stind_I1)
 
-let inline emitRead (il: IL) =
+let emitRead (il: IL) =
   il.Emit(OpCodes.Ldloc_0)
   il.EmitCall(OpCodes.Call, readKey, Array.empty)
   il.Emit(OpCodes.Stloc_1)
@@ -79,7 +79,7 @@ let inline emitRead (il: IL) =
   il.Emit(OpCodes.Conv_I1)
   il.Emit(OpCodes.Stind_I1)
 
-let inline emitWrite (il: IL) =
+let emitWrite (il: IL) =
   il.Emit(OpCodes.Ldloc_0)
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Conv_U2)
@@ -122,7 +122,7 @@ let inline emitOps il ops =
   emitOps' il ops
   emitRet il
 
-let inline compile ops =
+let compile ops =
   let ty =
     mkAssembly()
     |> mkModule
