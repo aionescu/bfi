@@ -28,7 +28,6 @@ let getKeyChar = typeof<ConsoleKeyInfo>.GetProperty("KeyChar").GetMethod
 let write = typeof<Console>.GetMethod("Write", [|typeof<char>|])
 
 // AssemblyBuilderAccess.Save is (currently?) unavailable in .NET Core
-// TODO: Find alternate library
 let inline mkAssembly() = AssemblyBuilder.DefineDynamicAssembly(AssemblyName("BF"), AssemblyBuilderAccess.Run)
 
 let inline mkModule (asm: AssemblyBuilder) = asm.DefineDynamicModule("Module")
@@ -40,12 +39,12 @@ let inline mkMethod (ty: TypeBuilder) = ty.DefineMethod("Main", methodAttrs, typ
 let inline getIL (mtd: MethodBuilder) = mtd.GetILGenerator()
 
 let inline emitTapeAlloc (il: ILGenerator) =
-  il.DeclareLocal(sbytePtrType) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> i F#, so I wrote a helper classlib in C#
+  il.DeclareLocal(sbytePtrType) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
   il.DeclareLocal(typeof<ConsoleKeyInfo>) |> ignore // Local needed for storing result of Console.ReadKey() to call .KeyChar on it
 
-  il.Emit(OpCodes.Ldc_I4, 65536) // Pushes `65536` as i32 on stack
-  il.Emit(OpCodes.Conv_U) // Converts to usize
-  il.Emit(OpCodes.Localloc) // Pops usize and allocates that many bytes on the stack, pushing ptr on stack
+  il.Emit(OpCodes.Ldc_I4, 65536)
+  il.Emit(OpCodes.Conv_U)
+  il.Emit(OpCodes.Localloc)
   il.Emit(OpCodes.Stloc_0)
 
 let inline emitRet (il: IL) =
