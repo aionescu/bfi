@@ -1,40 +1,41 @@
 module Bfi.Parser
 
-open System
 open Bfi.Ast
 
-type 'a span = 'a ReadOnlySpan
+let parse (source: string) =
+  let mutable stack = []
+  let mutable scope = []
+  let mutable inComment = false
+  let mutable idx = 0
 
-let inline skipComment (source: char span) =
-  let cr = source.IndexOf('\r')
-  let lf = source.IndexOf('\n')
+  for c in source do
+    match c with
+    | '\n' | '\r' -> inComment <- false
+    | '#' -> inComment <- true
+    | _ when inComment -> ()
 
-  if cr = -1 && lf = -1 then
-    span<char>.Empty
-  else
-    source.Slice(min cr lf)
+    | '+' -> scope <- inc :: scope
+    | '-' -> scope <- dec :: scope
+    | '<' -> scope <- movl :: scope
+    | '>' -> scope <- movr :: scope
+    | ',' -> scope <- Read :: scope
+    | '.' -> scope <- Write :: scope
 
-let inline next (source: char span) = source.Slice(1)
+    | '[' ->
+        stack <- (idx, scope) :: stack
+        scope <- []
 
-let rec parse' scope stack (source: char span) =
-  if source.IsEmpty then
-    match stack with
-    | [] -> List.rev scope
-    | _ -> failwith "Unmatched '['"
-  else
-    match source.[0] with
-    | '+' -> parse' (inc :: scope) stack <| next source
-    | '-' -> parse' (dec :: scope) stack <| next source
-    | '<' -> parse' (movl :: scope) stack <| next source
-    | '>' -> parse' (movr :: scope) stack <| next source
-    | ',' -> parse' (Read :: scope) stack <| next source
-    | '.' -> parse' (Write :: scope) stack <| next source
-    | '[' -> parse' [] (scope :: stack) <| next source
     | ']' ->
         match stack with
-        | parent :: stack -> parse' (Loop (List.rev scope) :: parent) stack <| next source
-        | [] -> failwith "Unmatched ']'"
-    | '#' -> parse' scope stack <| skipComment source
-    | _ -> parse' scope stack <| next source
+        | [] -> failwithf "Unmatched ']' at index %d" idx
+        | (_, parent) :: stack' ->
+            scope <- Loop (List.rev scope) :: parent
+            stack <- stack'
 
-let inline parse (source: string) = parse' [] [] <| source.AsSpan()
+    | _ -> ()
+
+    idx <- idx + 1
+
+  match stack with
+  | (idx, _) :: _ -> failwithf "Unmatched '[' at index %d" idx
+  | [] -> List.rev scope
