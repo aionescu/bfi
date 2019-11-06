@@ -108,5 +108,5 @@ Some test programs are made by other people and were found on the web. Such prog
 
 ## License
 
-This project is licensed under the terms of the MIT License.
+This repository is licensed under the terms of the MIT License.
 For more details, see [the license file](LICENSE.txt).
