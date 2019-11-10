@@ -1,41 +1,34 @@
 module Bfi.Parser
 
+open System
 open Bfi.Ast
 
-let parse (source: string) =
-  let mutable stack = []
-  let mutable scope = []
-  let mutable inComment = false
-  let mutable idx = 0
+type 'a span = 'a ReadOnlySpan
 
-  for c in source do
-    match c with
-    | '\n' | '\r' -> inComment <- false
-    | '#' -> inComment <- true
-    | _ when inComment -> ()
+let inline next (src: char span) = src.Slice(1)
 
-    | '+' -> scope <- inc :: scope
-    | '-' -> scope <- dec :: scope
-    | '<' -> scope <- movl :: scope
-    | '>' -> scope <- movr :: scope
-    | ',' -> scope <- Read :: scope
-    | '.' -> scope <- Write :: scope
-
-    | '[' ->
-        stack <- (idx, scope) :: stack
-        scope <- []
-
+let rec parse' inComment scope stack (src: char span) =
+  if src.IsEmpty then
+    match stack with
+    | [] -> List.rev scope
+    | _ -> failwith "Unmatched '['"
+  else
+    match src.[0] with
+    | '\r' | '\n' when inComment -> parse' false scope stack <| next src
+    | _ when inComment -> parse' true scope stack <| next src
+    | '#' -> parse' true scope stack <| next src
+    
+    | '+' -> parse' false (inc :: scope) stack <| next src
+    | '-' -> parse' false (dec :: scope) stack <| next src
+    | '<' -> parse' false (movl :: scope) stack <| next src
+    | '>' -> parse' false (movr :: scope) stack <| next src
+    | ',' -> parse' false (Read :: scope) stack <| next src
+    | '.' -> parse' false (Write :: scope) stack <| next src
+    | '[' -> parse' false [] (scope :: stack) <| next src
     | ']' ->
         match stack with
-        | [] -> failwithf "Unmatched ']' at index %d" idx
-        | (_, parent) :: stack' ->
-            scope <- Loop (List.rev scope) :: parent
-            stack <- stack'
+        | parent :: stack -> parse' false (Loop (List.rev scope) :: parent) stack <| next src
+        | [] -> failwith "Unmatched ']'"
+    | _ -> parse' false scope stack <| next src
 
-    | _ -> ()
-
-    idx <- idx + 1
-
-  match stack with
-  | (idx, _) :: _ -> failwithf "Unmatched '[' at index %d" idx
-  | [] -> List.rev scope
+let inline parse (src: string) = parse' false [] [] <| src.AsSpan()

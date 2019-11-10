@@ -8,15 +8,6 @@ open Bfi.Ast
 
 type IL = ILGenerator
 
-let inline ensureTypeOf() =
-  let type' = Ptr<sbyte>.TypeOf
-  if type'.Name <> "SByte*" then
-    failwithf "Error: typeof(sbyte*) is %s, expected SByte*" type'.Name
-  else
-    type'
-
-let sbytePtrType = ensureTypeOf()
-
 [<Literal>]
 let methodAttrs = MethodAttributes.Private ||| MethodAttributes.HideBySig ||| MethodAttributes.Static
 
@@ -39,7 +30,7 @@ let inline mkMethod (ty: TypeBuilder) = ty.DefineMethod("Main", methodAttrs, typ
 let inline getIL (mtd: MethodBuilder) = mtd.GetILGenerator()
 
 let emitTapeAlloc (il: ILGenerator) =
-  il.DeclareLocal(sbytePtrType) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
+  il.DeclareLocal(Ptr<sbyte>.TypeOf) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
   il.DeclareLocal(typeof<ConsoleKeyInfo>) |> ignore // Local needed for storing result of Console.ReadKey() to call .KeyChar on it
 
   il.Emit(OpCodes.Ldc_I4, 65536)
