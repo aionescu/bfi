@@ -14,6 +14,9 @@ let methodAttrs = MethodAttributes.Private ||| MethodAttributes.HideBySig ||| Me
 [<Literal>]
 let bindingFlags = BindingFlags.NonPublic ||| BindingFlags.Static
 
+[<Literal>]
+let tapeSize = 65_536
+
 let readKey = typeof<Console>.GetMethod("ReadKey", Array.empty)
 let getKeyChar = typeof<ConsoleKeyInfo>.GetProperty("KeyChar").GetMethod
 let write = typeof<Console>.GetMethod("Write", [|typeof<char>|])
@@ -33,7 +36,7 @@ let emitTapeAlloc (il: ILGenerator) =
   il.DeclareLocal(Ptr<sbyte>.TypeOf) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
   il.DeclareLocal(typeof<ConsoleKeyInfo>) |> ignore // Local needed for storing result of Console.ReadKey() to call .KeyChar on it
 
-  il.Emit(OpCodes.Ldc_I4, 65536)
+  il.Emit(OpCodes.Ldc_I4, tapeSize)
   il.Emit(OpCodes.Conv_U)
   il.Emit(OpCodes.Localloc)
   il.Emit(OpCodes.Stloc_0)
@@ -125,7 +128,7 @@ let compile ops =
     |> getIL
 
   emitOps il ops
-  ty.CreateType().GetMethod("Main", bindingFlags)
+  ty.CreateType()
 
-let inline run (mtd: MethodInfo) =
-  mtd.Invoke(null, Array.empty) |> ignore
+let inline run (ty: Type) =
+  ty.GetMethod("Main", bindingFlags).Invoke(null, Array.empty) |> ignore

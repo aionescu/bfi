@@ -5,30 +5,31 @@ open Bfi.Ast
 
 type 'a span = 'a ReadOnlySpan
 
-let inline next (src: char span) = src.Slice(1)
-
-let rec parse' inComment scope stack (src: char span) =
+let rec parse' inComment scope stack pos (src: char span) =
   if src.IsEmpty then
     match stack with
-    | [] -> List.rev scope
-    | _ -> failwith "Unmatched '['"
+    | [] -> Ok (List.rev scope)
+    | (openPos, _) :: _ -> Error <| sprintf "Unmatched '[' at position %d" openPos
   else
+    let nextPos = pos + 1
+    let nextSrc = src.Slice(1)
+
     match src.[0] with
-    | '\r' | '\n' when inComment -> parse' false scope stack <| next src
-    | _ when inComment -> parse' true scope stack <| next src
-    | '#' -> parse' true scope stack <| next src
+    | '\r' | '\n' when inComment -> parse' false scope stack nextPos nextSrc
+    | _ when inComment -> parse' true scope stack nextPos nextSrc
+    | '#' -> parse' true scope stack nextPos nextSrc
     
-    | '+' -> parse' false (inc :: scope) stack <| next src
-    | '-' -> parse' false (dec :: scope) stack <| next src
-    | '<' -> parse' false (movl :: scope) stack <| next src
-    | '>' -> parse' false (movr :: scope) stack <| next src
-    | ',' -> parse' false (Read :: scope) stack <| next src
-    | '.' -> parse' false (Write :: scope) stack <| next src
-    | '[' -> parse' false [] (scope :: stack) <| next src
+    | '+' -> parse' false (inc :: scope) stack nextPos nextSrc
+    | '-' -> parse' false (dec :: scope) stack nextPos nextSrc
+    | '<' -> parse' false (movl :: scope) stack nextPos nextSrc
+    | '>' -> parse' false (movr :: scope) stack nextPos nextSrc
+    | ',' -> parse' false (Read :: scope) stack nextPos nextSrc
+    | '.' -> parse' false (Write :: scope) stack nextPos nextSrc
+    | '[' -> parse' false [] ((pos, scope) :: stack) nextPos nextSrc
     | ']' ->
         match stack with
-        | parent :: stack -> parse' false (Loop (List.rev scope) :: parent) stack <| next src
-        | [] -> failwith "Unmatched ']'"
-    | _ -> parse' false scope stack <| next src
+        | (_, parent) :: stack -> parse' false (Loop (List.rev scope) :: parent) stack nextPos nextSrc
+        | [] -> Error <| sprintf "Unmatched ']' at position %d" pos
+    | _ -> parse' false scope stack nextPos nextSrc
 
-let inline parse (src: string) = parse' false [] [] <| src.AsSpan()
+let inline parse (src: string) = parse' false [] [] 0 <| src.AsSpan()
