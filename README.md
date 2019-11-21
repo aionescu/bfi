@@ -100,11 +100,11 @@ Also, setting a value after adding to it (or subtracting from it) will overwrite
 
 Consecutive `set`s also behave similarly: Only the last `set` is compiled, previous ones are elided.
 
-## Test programs
+## Sample programs
 
-BF programs used to test the interpreter can be found in the [Tests](Tests/) folder.
+BF programs used to test the interpreter can be found in the [Samples](Samples/) folder.
 
-Some test programs are made by other people and were found on the web. Such programs have a comment containing the download link, as well as the original license/copyright notices.
+Some sample programs are made by other people and were found on the web. Such programs have a comment containing the download link, as well as the original license/copyright notices.
 
 ## License
 
