@@ -1,4 +1,4 @@
-module Bfi.Ast
+module Language.Brainfuck.AST
 
 type Op =
   | Add of sbyte

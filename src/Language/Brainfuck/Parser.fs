@@ -1,7 +1,7 @@
-module Bfi.Parser
+module Language.Brainfuck.Parser
 
 open System
-open Bfi.Ast
+open Language.Brainfuck.AST
 
 type 'a span = 'a ReadOnlySpan
 

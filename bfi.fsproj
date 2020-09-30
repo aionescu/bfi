@@ -8,13 +8,15 @@
     <PublishSingleFile>true</PublishSingleFile>
     <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64</RuntimeIdentifiers>
   </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="src/Ast.fs"/>
-    <Compile Include="src/Parser.fs"/>
-    <Compile Include="src/Optimizer.fs"/>
-    <Compile Include="src/Codegen.fs"/>
-    <Compile Include="src/Program.fs"/>
+    <Compile Include="src/Language/Brainfuck/AST.fs"/>
+    <Compile Include="src/Language/Brainfuck/Parser.fs"/>
+    <Compile Include="src/Language/Brainfuck/Optimizer.fs"/>
+    <Compile Include="src/Language/Brainfuck/Codegen.fs"/>
+    <Compile Include="src/Language/Brainfuck/Main.fs"/>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="PtrHelper/PtrHelper.csproj"/>
   </ItemGroup>

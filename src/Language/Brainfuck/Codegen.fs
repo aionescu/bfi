@@ -1,10 +1,10 @@
-module Bfi.Codegen
+module Language.Brainfuck.Codegen
 
 open System
 open System.Reflection
 open System.Reflection.Emit
 open PtrHelper
-open Bfi.Ast
+open Language.Brainfuck.AST
 
 type IL = ILGenerator
 

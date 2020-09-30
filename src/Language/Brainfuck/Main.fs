@@ -1,4 +1,4 @@
-module Bfi.Program
+module Language.Brainfuck.Main
 
 open System.IO
 

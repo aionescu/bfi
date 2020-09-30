@@ -1,6 +1,6 @@
-module Bfi.Optimizer
+module Language.Brainfuck.Optimizer
 
-open Bfi.Ast
+open Language.Brainfuck.AST
 
 [<Literal>]
 let maxPasses = 64
