@@ -5,7 +5,7 @@ type Op =
   | Move of int
   | Set of sbyte
   | Read
-  | Write
+  | Write of int
   | WithOffset of int * Op
   | Loop of Op list
 
@@ -15,5 +15,5 @@ let decr = Add -1y
 let moveL = Move -1
 let moveR = Move 1
 let read = Read
-let write = Write
+let write = Write 1
 let set0 = Set 0y

@@ -25,6 +25,7 @@ let rec optimizeOnce' changed acc ops =
 
   | Add a :: Add b :: rest -> optimizeOnce' true acc <| Add (a + b) :: rest
   | Move a :: Move b :: rest -> optimizeOnce' true acc <| Move (a + b) :: rest
+  | Write a :: Write b :: rest -> optimizeOnce' true acc <| Write (a + b) :: rest
 
   | Set 0y as s :: Loop _ :: rest -> optimizeOnce' true acc <| s :: rest
 

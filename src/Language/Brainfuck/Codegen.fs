@@ -10,13 +10,13 @@ type IL = ILGenerator
 
 let tapeSize = 65_536
 
-let consoleReadKey = typeof<Console>.GetMethod("ReadKey", Array.empty)
-let getKeyChar = typeof<ConsoleKeyInfo>.GetProperty("KeyChar").GetMethod
-let consoleWrite = typeof<Console>.GetMethod("Write", [|typeof<char>|])
+let consoleRead = typeof<Console>.GetMethod("Read", Array.empty)
+let consoleWriteChar = typeof<Console>.GetMethod("Write", [|typeof<char>|])
+let consoleWriteString = typeof<Console>.GetMethod("Write", [|typeof<string>|])
+let stringCtor = typeof<string>.GetConstructor([|typeof<char>; typeof<int>|])
 
 let emitTapeAlloc (il: IL) =
   il.DeclareLocal(Ptr<sbyte>.TypeOf) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
-  il.DeclareLocal(typeof<ConsoleKeyInfo>) |> ignore // Local needed for storing result of Console.ReadKey() to call .KeyChar on it
 
   il.Emit(OpCodes.Ldc_I4, tapeSize)
   il.Emit(OpCodes.Conv_U)
@@ -50,18 +50,21 @@ let emitSet (il: IL) offset (value: sbyte) =
 
 let emitRead (il: IL) offset =
   pushCrrCell il offset
-  il.EmitCall(OpCodes.Call, consoleReadKey, Array.empty)
-  il.Emit(OpCodes.Stloc_1)
-  il.Emit(OpCodes.Ldloca_S, 1)
-  il.EmitCall(OpCodes.Call, getKeyChar, Array.empty)
+  il.Emit(OpCodes.Call, consoleRead)
   il.Emit(OpCodes.Conv_I1)
   il.Emit(OpCodes.Stind_I1)
 
-let emitWrite (il: IL) offset =
+let emitWrite (il: IL) offset count =
   pushCrrCell il offset
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Conv_U2)
-  il.Emit(OpCodes.Call, consoleWrite)
+
+  if count = 1 then
+    il.Emit(OpCodes.Call, consoleWriteChar)
+  else
+    il.Emit(OpCodes.Ldc_I4, count)
+    il.Emit(OpCodes.Newobj, stringCtor)
+    il.Emit(OpCodes.Call, consoleWriteString)
 
 let rec emitLoop (il: IL) ops =
   let loopStart = il.DefineLabel()
@@ -84,7 +87,7 @@ and emitOp (il: IL) offset = function
   | Move m -> emitMove il m
   | Set s -> emitSet il offset s
   | Read -> emitRead il offset
-  | Write -> emitWrite il offset
+  | Write n -> emitWrite il offset n
   | WithOffset (off, op) -> emitOp il off op
   | Loop ops -> emitLoop il ops
 
