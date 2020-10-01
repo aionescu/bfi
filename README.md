@@ -1,16 +1,18 @@
-# Bfi
+# bf
 
-`Bfi` is an optimizing [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter that runs on [.NET Core](https://en.wikipedia.org/wiki/.NET_Core).
+Optimizing [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter that runs on [.NET Core](https://en.wikipedia.org/wiki/.NET_Core).
 
-## Building from source
+## Building and running
 
-In order to build the project for a specific platform, run `dotnet build -r <platform>` in the repository's directory, where `<platform>` is either `win-x64`, `win-x86`, `linux-x64`, or `osx-x64`.
+You will need the .NET Core SDK, which can be found [here](https://dotnet.microsoft.com/download).
 
-You will need the .NET Core SDK v3.0 or newer, which you can download [here](https://dotnet.microsoft.com/download).
+To build, run `dotnet build` in the repo's root directory.
+
+To run the project, run `dotnet run <file>` (e.g. `dotnet run Samples/HelloWorld.bf`). Running will also build the project.
 
 ## Syntax and memory tape
 
-Since Brainfuck syntax is not fully agreed upon between different interpeters/compilers, I made the following choices:
+Since Brainfuck syntax is not fully agreed upon between different interpeters/compilers, `bf` follows these conventions:
 
 * Characters that are not BF instructions are simply ignored
 * Single-line comments are supported, and are introduced with the `#` character
@@ -19,15 +21,13 @@ Since Brainfuck syntax is not fully agreed upon between different interpeters/co
 * The number of cells in the memory tape is 65536, thus the memory tape occupies 64KiB
 * The memory tape is allocated on the stack, so overflowing it will likely result in undefined behaviour
 
-## Compiler internals
+## Sample programs
 
-The compilation process is split into 3 phases: [Parsing](src/Bfi/Parser.fs), [Optimization](src/Bfi/Optimizer.fs), and [Code generation](src/Bfi/Codegen.fs) (links lead to corresponding source files).
+BF programs used to test the interpreter can be found in the [Samples](Samples/) folder.
 
-In the parsing phase, the text source is converted into an Abstract Syntax Tree ([defined here](src/Bfi/Ast.fs)), which is then processed by the later phases.
-In the optimization phase, the AST that was parsed is converted into a smaller, more efficient AST. More details can be found in [the next section](#ast-and-optimizations).
-In the codegen phase, the AST is converted into [.NET CIL](https://en.wikipedia.org/wiki/Common_Intermediate_Language) code, which is then compiled to an in-memory assembly and executed.
+Some sample programs are made by other people and were found on the web. Such programs have a comment containing the download link, as well as the original license/copyright notices.
 
-## AST and Optimizations
+## Optimizations
 
 The AST, or intermediate representation used by the compiler consists of generalized versions of BF instructions.
 For example, the `+` instruction gets compiled to an `Add 1` node, while `-` gets compiled to `Add -1`.
@@ -47,11 +47,11 @@ Multiple instructions of the same kind (e.g. + and -, or < and >) are merged int
 ```
 
 ```bf
->>> << => Mov 1
+>>> << => Move 1
 ```
 
 ```bf
-> <<<< => Mov -3
+> <<<< => Move -3
 ```
 
 ```bf
@@ -61,7 +61,7 @@ Multiple instructions of the same kind (e.g. + and -, or < and >) are merged int
 ### Efficient cell zeroing
 
 It is a common pattern in BF code to reset a cell's value using the `[-]` instruction.
-The compiler recognizes this pattern and transforms it into a single assignment.
+The interpreter recognizes this pattern and transforms it into a single assignment.
 
 Note that due to the fact that cells may overflow, `[+]` achieves the same purpose (and is also optimized).
 
@@ -73,12 +73,22 @@ Note that due to the fact that cells may overflow, `[+]` achieves the same purpo
 [+] => Set 0
 ```
 
+### Instructions with offset
+
+Another common BF pattern is to go to some cell, run an instruction on it, then move back (e.g. `>>>>++<<<<`).
+
+The naive way to compile this is to emit `[Move 4, Add 2, Move -4]`.
+
+Not only does this use 3 instructions, it also reads and modifies the current cell twice.
+
+The interpreter optimizes this into `[WithOffset 4 (Add 2)]`, which reads the current cell once, adds the offset to it, then performs the instruction at the resulting address.
+
 ### Dead code elimination
 
 In some cases (such as consecutive loops), the compiler can statically determine that particular instructions have no effect, so they are removed.
 
 ```bf
-[+>][<-] => [+>] => Loop [Add 1, Mov 1] # Second loop is not compiled
+[+>][<-] => [+>] => Loop [Add 1, Move 1] # Second loop is not compiled
 ```
 
 Loops at the beginning of the program are also removed, as the initial value of cells is 0.
@@ -86,7 +96,10 @@ Loops at the beginning of the program are also removed, as the initial value of 
 ### Instruction conversion
 
 In some cases, certain instructions can be replaced with cheaper ones.
-For example, adding after a loop can be replaced with a `set` instruction, as the value of the cell is 0 (since it exited the loop), so the 2 instructions are equivalent.
+
+For example, `Set` instructions are cheaper than `Add` instructions, since an `Add` needs to read the current cell, load the other number, perform the addition, then store it back into the current cell, while a `Set` only needs 1 load + write.
+
+As such, an `Add` instruction after a loop can be replaced with a `Set` instruction, as the value of the cell is 0 (since it exited the loop), so the 2 instructions are equivalent.
 
 ```bf
 [-]+++ => Set 0, Add 3 => Set 3
@@ -98,13 +111,7 @@ Also, setting a value after adding to it (or subtracting from it) will overwrite
 +++[-] => Add 3, Set 0 => Set 0
 ```
 
-Consecutive `set`s also behave similarly: Only the last `set` is compiled, previous ones are elided.
-
-## Sample programs
-
-BF programs used to test the interpreter can be found in the [Samples](Samples/) folder.
-
-Some sample programs are made by other people and were found on the web. Such programs have a comment containing the download link, as well as the original license/copyright notices.
+Consecutive `Set`s also behave similarly: Only the last `Set` is emitted, previous ones are elided.
 
 ## License
 
