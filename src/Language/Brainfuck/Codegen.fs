@@ -93,23 +93,18 @@ let emitOps il ops =
   emitOps' il ops
   il.Emit(OpCodes.Ret)
 
-let compile ops =
-  let ty =
-    AssemblyBuilder
-    .DefineDynamicAssembly(AssemblyName("Brainfuck"), AssemblyBuilderAccess.Run)
-    .DefineDynamicModule("Module")
-    .DefineType("Program")
+let compileAndRun ops =
+  let asm = AssemblyBuilder.DefineDynamicAssembly(AssemblyName("Brainfuck"), AssemblyBuilderAccess.Run)
+  let mdl = asm.DefineDynamicModule("Module")
+  let ty = mdl.DefineType("Program")
 
-  let il =
-    ty
-    .DefineMethod("Main", MethodAttributes.Private ||| MethodAttributes.HideBySig ||| MethodAttributes.Static, typeof<Void>, Array.empty)
-    .GetILGenerator()
+  let mtd = ty.DefineMethod("Main", MethodAttributes.Private ||| MethodAttributes.HideBySig ||| MethodAttributes.Static, typeof<Void>, Array.empty)
+  let il = mtd.GetILGenerator()
 
   emitOps il ops
-  ty.CreateType()
 
-let run (ty: Type) =
-  ty
-  .GetMethod("Main", BindingFlags.NonPublic ||| BindingFlags.Static)
-  .Invoke(null, Array.empty)
+  let ty = ty.CreateType()
+  let mtd = ty.GetMethod("Main", BindingFlags.NonPublic ||| BindingFlags.Static)
+
+  mtd.Invoke(null, Array.empty)
   |> ignore

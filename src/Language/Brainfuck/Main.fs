@@ -22,6 +22,5 @@ let main argv =
   openFile argv
   >>= Parser.parse
   <&> Optimizer.optimize
-  <&> Codegen.compile
-  <&> Codegen.run
+  <&> Codegen.compileAndRun
   |> writeErrors
