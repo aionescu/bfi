@@ -8,7 +8,7 @@ type 'a span = 'a ReadOnlySpan
 let rec parse' inComment scope stack pos (src: char span) =
   if src.IsEmpty then
     match stack with
-    | [] -> Ok (List.rev scope)
+    | [] -> Ok <| List.rev scope
     | (openPos, _) :: _ -> Error <| sprintf "Unmatched '[' at position %d" openPos
   else
     let nextPos = pos + 1
@@ -19,12 +19,12 @@ let rec parse' inComment scope stack pos (src: char span) =
     | _ when inComment -> parse' true scope stack nextPos nextSrc
     | '#' -> parse' true scope stack nextPos nextSrc
     
-    | '+' -> parse' false (inc :: scope) stack nextPos nextSrc
-    | '-' -> parse' false (dec :: scope) stack nextPos nextSrc
-    | '<' -> parse' false (movl :: scope) stack nextPos nextSrc
-    | '>' -> parse' false (movr :: scope) stack nextPos nextSrc
-    | ',' -> parse' false (Read :: scope) stack nextPos nextSrc
-    | '.' -> parse' false (Write :: scope) stack nextPos nextSrc
+    | '+' -> parse' false (incr :: scope) stack nextPos nextSrc
+    | '-' -> parse' false (decr :: scope) stack nextPos nextSrc
+    | '<' -> parse' false (moveL :: scope) stack nextPos nextSrc
+    | '>' -> parse' false (moveR :: scope) stack nextPos nextSrc
+    | ',' -> parse' false (read :: scope) stack nextPos nextSrc
+    | '.' -> parse' false (write :: scope) stack nextPos nextSrc
     | '[' -> parse' false [] ((pos, scope) :: stack) nextPos nextSrc
     | ']' ->
         match stack with
@@ -32,4 +32,4 @@ let rec parse' inComment scope stack pos (src: char span) =
         | [] -> Error <| sprintf "Unmatched ']' at position %d" pos
     | _ -> parse' false scope stack nextPos nextSrc
 
-let inline parse (src: string) = parse' false [] [] 0 <| src.AsSpan()
+let parse (src: string) = parse' false [] [] 0 <| src.AsSpan()

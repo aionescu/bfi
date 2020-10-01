@@ -2,13 +2,12 @@ module Language.Brainfuck.Optimizer
 
 open Language.Brainfuck.AST
 
-[<Literal>]
 let maxPasses = 64
 
 let rec optimizeOnce' changed acc ops =
   match ops with
   | Add 0y :: rest
-  | Mov 0 :: rest -> optimizeOnce' true acc rest
+  | Move 0 :: rest -> optimizeOnce' true acc rest
 
   | Loop [Add -1y] :: rest
   | Loop [Add 1y] :: rest -> optimizeOnce' true acc <| set0 :: rest
@@ -21,7 +20,7 @@ let rec optimizeOnce' changed acc ops =
   | Set s :: Add a :: rest -> optimizeOnce' true acc <| Set (s + a) :: rest
 
   | Add a :: Add b :: rest -> optimizeOnce' true acc <| Add (a + b) :: rest
-  | Mov a :: Mov b :: rest -> optimizeOnce' true acc <| Mov (a + b) :: rest
+  | Move a :: Move b :: rest -> optimizeOnce' true acc <| Move (a + b) :: rest
 
   | Set 0y as s :: Loop _ :: rest -> optimizeOnce' true acc <| s :: rest
 
@@ -35,17 +34,16 @@ let rec optimizeOnce' changed acc ops =
   | op :: rest -> optimizeOnce' changed (op :: acc) rest
   | [] -> (changed, List.rev acc)
 
-let inline optimizeOnce ops = optimizeOnce' false [] ops
+let optimizeOnce = optimizeOnce' false []
 
 let rec optimize' passesLeft ops =
-  if passesLeft = 0 then
-    ops
+  if passesLeft = 0
+  then ops
   else
     let changed, ops = optimizeOnce ops
 
-    if not changed then
-      ops
-    else
-      optimize' (passesLeft - 1) ops 
+    if not changed
+    then ops
+    else optimize' (passesLeft - 1) ops 
   
-let inline optimize ops = optimize' maxPasses (set0 :: ops)
+let optimize ops = optimize' maxPasses (set0 :: ops)

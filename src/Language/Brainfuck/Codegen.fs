@@ -8,31 +8,13 @@ open Language.Brainfuck.AST
 
 type IL = ILGenerator
 
-[<Literal>]
-let methodAttrs = MethodAttributes.Private ||| MethodAttributes.HideBySig ||| MethodAttributes.Static
-
-[<Literal>]
-let bindingFlags = BindingFlags.NonPublic ||| BindingFlags.Static
-
-[<Literal>]
 let tapeSize = 65_536
 
-let readKey = typeof<Console>.GetMethod("ReadKey", Array.empty)
+let consoleReadKey = typeof<Console>.GetMethod("ReadKey", Array.empty)
 let getKeyChar = typeof<ConsoleKeyInfo>.GetProperty("KeyChar").GetMethod
-let write = typeof<Console>.GetMethod("Write", [|typeof<char>|])
+let consoleWrite = typeof<Console>.GetMethod("Write", [|typeof<char>|])
 
-// AssemblyBuilderAccess.Save is (currently?) unavailable in .NET Core
-let inline mkAssembly() = AssemblyBuilder.DefineDynamicAssembly(AssemblyName("BF"), AssemblyBuilderAccess.Run)
-
-let inline mkModule (asm: AssemblyBuilder) = asm.DefineDynamicModule("Module")
-
-let inline mkType (mdl: ModuleBuilder) = mdl.DefineType("Program")
-
-let inline mkMethod (ty: TypeBuilder) = ty.DefineMethod("Main", methodAttrs, typeof<Void>, Array.empty)
-
-let inline getIL (mtd: MethodBuilder) = mtd.GetILGenerator()
-
-let emitTapeAlloc (il: ILGenerator) =
+let emitTapeAlloc (il: IL) =
   il.DeclareLocal(Ptr<sbyte>.TypeOf) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
   il.DeclareLocal(typeof<ConsoleKeyInfo>) |> ignore // Local needed for storing result of Console.ReadKey() to call .KeyChar on it
 
@@ -40,9 +22,6 @@ let emitTapeAlloc (il: ILGenerator) =
   il.Emit(OpCodes.Conv_U)
   il.Emit(OpCodes.Localloc)
   il.Emit(OpCodes.Stloc_0)
-
-let inline emitRet (il: IL) =
-  il.Emit(OpCodes.Ret)
 
 let emitAdd (il: IL) (value: sbyte) =
   il.Emit(OpCodes.Ldloc_0)
@@ -66,7 +45,7 @@ let emitSet (il: IL) (value: sbyte) =
 
 let emitRead (il: IL) =
   il.Emit(OpCodes.Ldloc_0)
-  il.EmitCall(OpCodes.Call, readKey, Array.empty)
+  il.EmitCall(OpCodes.Call, consoleReadKey, Array.empty)
   il.Emit(OpCodes.Stloc_1)
   il.Emit(OpCodes.Ldloca_S, 1)
   il.EmitCall(OpCodes.Call, getKeyChar, Array.empty)
@@ -77,9 +56,9 @@ let emitWrite (il: IL) =
   il.Emit(OpCodes.Ldloc_0)
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Conv_U2)
-  il.Emit(OpCodes.Call, write)
+  il.Emit(OpCodes.Call, consoleWrite)
 
-let rec emitLoop (il: IL) (ops: Op list) =
+let rec emitLoop (il: IL) ops =
   let loopStart = il.DefineLabel()
   let loopEnd = il.DefineLabel()
 
@@ -95,40 +74,42 @@ let rec emitLoop (il: IL) (ops: Op list) =
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Brtrue, loopStart)
 
-and emitOp (il: IL) (op: Op) =
-  match op with
+and emitOp (il: IL) = function
   | Add a -> emitAdd il a
-  | Mov m -> emitMov il m
+  | Move m -> emitMov il m
   | Set s -> emitSet il s
   | Read -> emitRead il
   | Write -> emitWrite il
   | Loop ops -> emitLoop il ops
 
-and emitOps' il ops =
-  match ops with
+and emitOps' il = function
   | [] -> ()
   | op :: rest ->
       emitOp il op
       emitOps' il rest
 
-let inline emitOps il ops =
+let emitOps il ops =
   emitTapeAlloc il
   emitOps' il ops
-  emitRet il
+  il.Emit(OpCodes.Ret)
 
 let compile ops =
   let ty =
-    mkAssembly()
-    |> mkModule
-    |> mkType
+    AssemblyBuilder
+    .DefineDynamicAssembly(AssemblyName("Brainfuck"), AssemblyBuilderAccess.Run)
+    .DefineDynamicModule("Module")
+    .DefineType("Program")
 
   let il =
     ty
-    |> mkMethod
-    |> getIL
+    .DefineMethod("Main", MethodAttributes.Private ||| MethodAttributes.HideBySig ||| MethodAttributes.Static, typeof<Void>, Array.empty)
+    .GetILGenerator()
 
   emitOps il ops
   ty.CreateType()
 
-let inline run (ty: Type) =
-  ty.GetMethod("Main", bindingFlags).Invoke(null, Array.empty) |> ignore
+let run (ty: Type) =
+  ty
+  .GetMethod("Main", BindingFlags.NonPublic ||| BindingFlags.Static)
+  .Invoke(null, Array.empty)
+  |> ignore

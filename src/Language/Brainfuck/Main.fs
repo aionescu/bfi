@@ -2,6 +2,9 @@ module Language.Brainfuck.Main
 
 open System.IO
 
+let (>>=) a f = Result.bind f a
+let (<&>) a f = Result.map f a
+
 let openFile args =
   if Array.isEmpty args then
     Error "No input file specified"
@@ -9,16 +12,16 @@ let openFile args =
     Ok <| File.ReadAllText args.[0]
 
 let writeErrors = function
-  | Ok _ -> ()
-  | Error err -> printfn "Error: %s." err
+  | Ok _ -> 0
+  | Error err ->
+      printfn "Error: %s." err
+      1
 
 [<EntryPoint>]
 let main argv =
   openFile argv
-  |> Result.bind Parser.parse
-  |> Result.map Optimizer.optimize
-  |> Result.map Codegen.compile
-  |> Result.map Codegen.run
+  >>= Parser.parse
+  <&> Optimizer.optimize
+  <&> Codegen.compile
+  <&> Codegen.run
   |> writeErrors
-  
-  0
