@@ -4,6 +4,10 @@ open Language.Brainfuck.AST
 
 let maxPasses = 64
 
+let canDoWithOffset = function
+  | Move _ | Loop _ -> false
+  | _ -> true
+
 let rec optimizeOnce' changed acc ops =
   match ops with
   | Add 0y :: rest
@@ -23,6 +27,12 @@ let rec optimizeOnce' changed acc ops =
   | Move a :: Move b :: rest -> optimizeOnce' true acc <| Move (a + b) :: rest
 
   | Set 0y as s :: Loop _ :: rest -> optimizeOnce' true acc <| s :: rest
+
+  | Move m :: op :: Move n :: rest
+    when canDoWithOffset op && m = -n ->
+      match op with
+        | WithOffset (o, op') -> optimizeOnce' true acc <| WithOffset (m + o, op') :: rest
+        | _ -> optimizeOnce' true acc <| WithOffset (m, op) :: rest
 
   | Loop _ as l :: Loop _ :: rest
   | Loop [Loop _ as l] :: rest -> optimizeOnce' true acc <| l :: rest

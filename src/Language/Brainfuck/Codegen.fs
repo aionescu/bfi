@@ -23,8 +23,15 @@ let emitTapeAlloc (il: IL) =
   il.Emit(OpCodes.Localloc)
   il.Emit(OpCodes.Stloc_0)
 
-let emitAdd (il: IL) (value: sbyte) =
+let pushCrrCell (il: IL) (offset: int) =
   il.Emit(OpCodes.Ldloc_0)
+
+  if (offset <> 0) then
+    il.Emit(OpCodes.Ldc_I4, offset)
+    il.Emit(OpCodes.Add)
+
+let emitAdd (il: IL) offset (value: sbyte) =
+  pushCrrCell il offset
   il.Emit(OpCodes.Dup)
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Ldc_I4_S, value)
@@ -32,19 +39,17 @@ let emitAdd (il: IL) (value: sbyte) =
   il.Emit(OpCodes.Conv_I1)
   il.Emit(OpCodes.Stind_I1)
 
-let emitMov (il: IL) (value: int) =
-  il.Emit(OpCodes.Ldloc_0)
-  il.Emit(OpCodes.Ldc_I4, value)
-  il.Emit(OpCodes.Add)
+let emitMove (il: IL) value =
+  pushCrrCell il value
   il.Emit(OpCodes.Stloc_0)
 
-let emitSet (il: IL) (value: sbyte) =
-  il.Emit(OpCodes.Ldloc_0)
+let emitSet (il: IL) offset (value: sbyte) =
+  pushCrrCell il offset
   il.Emit(OpCodes.Ldc_I4_S, value)
   il.Emit(OpCodes.Stind_I1)
 
-let emitRead (il: IL) =
-  il.Emit(OpCodes.Ldloc_0)
+let emitRead (il: IL) offset =
+  pushCrrCell il offset
   il.EmitCall(OpCodes.Call, consoleReadKey, Array.empty)
   il.Emit(OpCodes.Stloc_1)
   il.Emit(OpCodes.Ldloca_S, 1)
@@ -52,8 +57,8 @@ let emitRead (il: IL) =
   il.Emit(OpCodes.Conv_I1)
   il.Emit(OpCodes.Stind_I1)
 
-let emitWrite (il: IL) =
-  il.Emit(OpCodes.Ldloc_0)
+let emitWrite (il: IL) offset =
+  pushCrrCell il offset
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Conv_U2)
   il.Emit(OpCodes.Call, consoleWrite)
@@ -74,18 +79,19 @@ let rec emitLoop (il: IL) ops =
   il.Emit(OpCodes.Ldind_I1)
   il.Emit(OpCodes.Brtrue, loopStart)
 
-and emitOp (il: IL) = function
-  | Add a -> emitAdd il a
-  | Move m -> emitMov il m
-  | Set s -> emitSet il s
-  | Read -> emitRead il
-  | Write -> emitWrite il
+and emitOp (il: IL) offset = function
+  | Add a -> emitAdd il offset a
+  | Move m -> emitMove il m
+  | Set s -> emitSet il offset s
+  | Read -> emitRead il offset
+  | Write -> emitWrite il offset
+  | WithOffset (off, op) -> emitOp il off op
   | Loop ops -> emitLoop il ops
 
 and emitOps' il = function
   | [] -> ()
   | op :: rest ->
-      emitOp il op
+      emitOp il 0 op
       emitOps' il rest
 
 let emitOps il ops =

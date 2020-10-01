@@ -9,7 +9,7 @@ let rec parse' inComment scope stack pos (src: char span) =
   if src.IsEmpty then
     match stack with
     | [] -> Ok <| List.rev scope
-    | (openPos, _) :: _ -> Error <| sprintf "Unmatched '[' at position %d" openPos
+    | (openPos, _) :: _ -> Error <| sprintf "Unmatched '[' at position %d." openPos
   else
     let nextPos = pos + 1
     let nextSrc = src.Slice(1)
@@ -29,7 +29,7 @@ let rec parse' inComment scope stack pos (src: char span) =
     | ']' ->
         match stack with
         | (_, parent) :: stack -> parse' false (Loop (List.rev scope) :: parent) stack nextPos nextSrc
-        | [] -> Error <| sprintf "Unmatched ']' at position %d" pos
+        | [] -> Error <| sprintf "Unmatched ']' at position %d." pos
     | _ -> parse' false scope stack nextPos nextSrc
 
 let parse (src: string) = parse' false [] [] 0 <| src.AsSpan()

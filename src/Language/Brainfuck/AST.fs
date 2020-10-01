@@ -6,6 +6,7 @@ type Op =
   | Set of sbyte
   | Read
   | Write
+  | WithOffset of int * Op
   | Loop of Op list
 
 // Cached instances to avoid large amount of allocations on big files
