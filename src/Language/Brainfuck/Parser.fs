@@ -3,9 +3,7 @@ module Language.Brainfuck.Parser
 open System
 open Language.Brainfuck.AST
 
-type 'a span = 'a ReadOnlySpan
-
-let rec parse' inComment scope stack pos (src: char span) =
+let rec parse' inComment scope stack pos (src: char ReadOnlySpan) =
   if src.IsEmpty then
     match stack with
     | [] -> Ok <| List.rev scope
@@ -32,4 +30,4 @@ let rec parse' inComment scope stack pos (src: char span) =
         | [] -> Error <| sprintf "Unmatched ']' at position %d." pos
     | _ -> parse' false scope stack nextPos nextSrc
 
-let parse (src: string) = parse' false [] [] 0 <| src.AsSpan()
+let parse (src: string) = parse' false [] [] 0 (src.AsSpan())
