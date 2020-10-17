@@ -13,8 +13,4 @@
     <Compile Include="src/Language/Brainfuck/Codegen.fs"/>
     <Compile Include="src/Language/Brainfuck/Main.fs"/>
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="PtrHelper/PtrHelper.csproj"/>
-  </ItemGroup>
 </Project>

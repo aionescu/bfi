@@ -3,7 +3,6 @@ module Language.Brainfuck.Codegen
 open System
 open System.Reflection
 open System.Reflection.Emit
-open PtrHelper
 open Language.Brainfuck.AST
 
 type IL = ILGenerator
@@ -16,7 +15,7 @@ let consoleWriteString = typeof<Console>.GetMethod("Write", [|typeof<string>|])
 let stringCtor = typeof<string>.GetConstructor([|typeof<char>; typeof<int>|])
 
 let emitTapeAlloc (il: IL) =
-  il.DeclareLocal(Ptr<sbyte>.TypeOf) |> ignore // typeof<_ nativeptr> always returns typeof<IntPtr> in F#, so I wrote a helper classlib in C#
+  il.DeclareLocal(typeof<sbyte>.MakePointerType()) |> ignore
 
   il.Emit(OpCodes.Ldc_I4, tapeSize)
   il.Emit(OpCodes.Conv_U)
@@ -75,7 +74,7 @@ let rec emitLoop (il: IL) ops =
   il.MarkLabel(loopStart)
 
   emitOps' il ops
- 
+
   il.MarkLabel(loopEnd)
 
   il.Emit(OpCodes.Ldloc_0)
