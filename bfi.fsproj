@@ -11,6 +11,6 @@
     <Compile Include="src/Language/Brainfuck/Parser.fs"/>
     <Compile Include="src/Language/Brainfuck/Optimizer.fs"/>
     <Compile Include="src/Language/Brainfuck/Codegen.fs"/>
-    <Compile Include="src/Language/Brainfuck/Main.fs"/>
+    <Compile Include="src/Main.fs"/>
   </ItemGroup>
 </Project>

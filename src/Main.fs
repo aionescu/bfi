@@ -1,6 +1,10 @@
-module Language.Brainfuck.Main
+module Main
 
 open System.IO
+
+open Language.Brainfuck.Parser
+open Language.Brainfuck.Optimizer
+open Language.Brainfuck.Codegen
 
 let (>>=) a f = Result.bind f a
 let (<&>) a f = Result.map f a
@@ -21,7 +25,7 @@ let writeErrors = function
 [<EntryPoint>]
 let main argv =
   openFile argv
-  >>= Parser.parse
-  <&> Optimizer.optimize
-  <&> Codegen.compileAndRun
+  >>= parse
+  <&> optimize
+  <&> compileAndRun
   |> writeErrors
