@@ -1,7 +1,7 @@
 module Language.Brainfuck.Parser
 
 open System
-open Language.Brainfuck.AST
+open Language.Brainfuck.IR
 
 let rec parse' inComment scope stack pos (src: char ReadOnlySpan) =
   if src.IsEmpty then
@@ -16,7 +16,7 @@ let rec parse' inComment scope stack pos (src: char ReadOnlySpan) =
     | '\r' | '\n' when inComment -> parse' false scope stack nextPos nextSrc
     | _ when inComment -> parse' true scope stack nextPos nextSrc
     | '#' -> parse' true scope stack nextPos nextSrc
-    
+
     | '+' -> parse' false (incr :: scope) stack nextPos nextSrc
     | '-' -> parse' false (decr :: scope) stack nextPos nextSrc
     | '<' -> parse' false (moveL :: scope) stack nextPos nextSrc

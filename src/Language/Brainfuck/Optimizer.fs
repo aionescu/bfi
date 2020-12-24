@@ -1,6 +1,6 @@
 module Language.Brainfuck.Optimizer
 
-open Language.Brainfuck.AST
+open Language.Brainfuck.IR
 
 let maxPasses = 64
 
@@ -55,6 +55,6 @@ let rec optimize' passesLeft ops =
 
     if not changed
     then ops
-    else optimize' (passesLeft - 1) ops 
-  
+    else optimize' (passesLeft - 1) ops
+
 let optimize ops = optimize' maxPasses (set0 :: ops)

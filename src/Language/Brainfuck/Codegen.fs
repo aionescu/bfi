@@ -3,7 +3,7 @@ module Language.Brainfuck.Codegen
 open System
 open System.Reflection
 open System.Reflection.Emit
-open Language.Brainfuck.AST
+open Language.Brainfuck.IR
 
 type IL = ILGenerator
 
