@@ -1,4 +1,4 @@
-# bf
+# bfi
 
 Optimizing [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter that runs on [.NET Core](https://en.wikipedia.org/wiki/.NET_Core).
 
@@ -12,7 +12,7 @@ To run the project, run `dotnet run <file>` (e.g. `dotnet run Samples/HelloWorld
 
 ## Syntax and memory tape
 
-Since Brainfuck syntax is not fully agreed upon between different interpeters/compilers, `bf` follows these conventions:
+Since Brainfuck syntax is not fully agreed upon between different interpeters/compilers, `bfi` follows these conventions:
 
 * Characters that are not BF instructions are simply ignored
 * Single-line comments are supported, and are introduced with the `#` character
