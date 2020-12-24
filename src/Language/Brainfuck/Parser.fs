@@ -3,22 +3,24 @@ module Language.Brainfuck.Parser
 open System
 open Language.Brainfuck.IR
 
+let err line col msg = Error <| sprintf "(L%d, C%d): %s" line col msg
+
 let rec parse' inComment scope stack line col (src: char ReadOnlySpan) =
   if src.IsEmpty
   then
     match stack with
     | [] -> Ok <| List.rev scope
-    | (openLine, openCol, _) :: _ -> Error <| sprintf "(L%d, C%d): Unmatched '['." openLine openCol
+    | (openLine, openCol, _) :: _ -> err openLine openCol "Unmatched '['."
   else
-    let nextLine, nextCol, sliceAmount =
-      if src.StartsWith(Environment.NewLine.AsSpan())
-      then line + 1, 1, Environment.NewLine.Length
-      else line, col + 1, 1
+    let nextLine, nextCol =
+      if src.[0] = '\n'
+      then line + 1, 1
+      else line, col + 1
 
-    let nextSrc = src.Slice(sliceAmount)
+    let nextSrc = src.Slice(1)
 
     match src.[0] with
-    | '\r' | '\n' when inComment -> parse' false scope stack nextLine nextCol nextSrc
+    | '\n' when inComment -> parse' false scope stack nextLine nextCol nextSrc
     | _ when inComment -> parse' true scope stack nextLine nextCol nextSrc
     | '#' -> parse' true scope stack nextLine nextCol nextSrc
 
@@ -32,7 +34,9 @@ let rec parse' inComment scope stack line col (src: char ReadOnlySpan) =
     | ']' ->
         match stack with
         | (_, _, parent) :: stack -> parse' false (Loop (List.rev scope) :: parent) stack nextLine nextCol nextSrc
-        | [] -> Error <| sprintf "(L%d, C%d): Unmatched ']'." line col
-    | _ -> parse' false scope stack nextLine nextCol nextSrc
+        | [] -> err line col "Unmatched ']'."
+
+    | c when Char.IsWhiteSpace c -> parse' false scope stack nextLine nextCol nextSrc
+    | c -> err line col <| sprintf "Invalid character '%c'." c
 
 let parse (src: string) = parse' false [] [] 1 1 (src.AsSpan())
