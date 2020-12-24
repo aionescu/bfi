@@ -10,8 +10,8 @@ let (>>=) a f = Result.bind f a
 let (<&>) a f = Result.map f a
 
 let openFile args =
-  if Array.isEmpty args then
-    Error "No input file specified."
+  if Array.isEmpty args
+  then Error "No input file specified."
   else
     try Ok <| File.ReadAllText args.[0]
     with e -> Error e.Message
@@ -26,6 +26,5 @@ let writeErrors = function
 let main argv =
   openFile argv
   >>= parse
-  <&> optimize
-  <&> compileAndRun
+  <&> (optimize >> compileAndRun)
   |> writeErrors
