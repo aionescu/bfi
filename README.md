@@ -1,3 +1,5 @@
+*This project is no longer maintained. Its "spritiual successor" can be found [here](https://github.com/aionescu/oplang).*
+
 # bfi
 
 Optimizing [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter that runs on [.NET 5](https://en.wikipedia.org/wiki/.NET_Core).
